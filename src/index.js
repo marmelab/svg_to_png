@@ -1,14 +1,11 @@
 const fs = require('fs');
+const tmp = require('tmp');
 
-let data = '';
+const tmpFile = tmp.tmpNameSync();
+const tmpStream = fs.createWriteStream(tmpFile);
 
-process.stdin.on('readable', () => {
-    const chunk = process.stdin.read();
-    if (chunk !== null) {
-        data += chunk;
-    }
-});
+process.stdin.pipe(tmpStream);
 
 process.stdin.on('end', () => {
-    console.log({ data });
+    console.log(tmpFile);
 });
