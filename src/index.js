@@ -31,9 +31,9 @@ const executeShellCommand = async options => {
         })),
     );
 
-    for (const promise of promises) {
-        const result = await promise;
-        if (promises.length === 1) {
+    const results = await Promise.all(promises);
+    results.forEach(result => {
+        if (results.length === 1) {
             print('\n');
             print(result.pngDataUrl);
             clip(result.pngDataUrl);
@@ -50,7 +50,7 @@ const executeShellCommand = async options => {
         print(formatSource(result.source));
         print('\n');
         print(result.pngDataUrl);
-    }
+    });
 };
 
 commander
