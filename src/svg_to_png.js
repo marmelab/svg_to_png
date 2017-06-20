@@ -64,7 +64,19 @@ const executeShellCommand = async options => {
 
 commander
     .version('0.0.1')
-    .usage('[options] <file ...>')
+    .description('An svg to png converter using chrome in headless mode.')
+    .usage(
+        `
+    # passing file paths as arguments
+    svg_to_png [options] <file ...>
+
+    # piping a file
+    svg_to_png [options] < file
+
+    # starting an http server listening to POST requests with the svg as their body
+    svg_to_png --http
+    `,
+    )
     .option('--http', 'Starts the HTTP server')
     .option(
         '--port <n>',
