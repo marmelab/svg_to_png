@@ -16,10 +16,6 @@ const executeShellCommand = async options => {
     const sources = [];
 
     if (options.http) {
-        print(
-            formatMessage(`Starting server on`),
-            `http://localhost:${options.port}`,
-        );
         await startServer(parseInt(options.port));
     }
 
