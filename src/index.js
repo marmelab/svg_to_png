@@ -2,7 +2,7 @@ import { createWriteStream, writeFile } from 'fs';
 import { tmpNameSync } from 'tmp';
 import minimist from 'minimist';
 import chromeRemoteInterface from 'chrome-remote-interface';
-import { exec } from 'child_process';
+import { launch } from 'chrome-launcher';
 
 const argv = minimist(process.argv.slice(2));
 const viewportWidth = argv.viewportWidth || 1440;
@@ -17,74 +17,69 @@ process.stdin.pipe(tmpStream);
 process.stdin.on('end', () => {
     console.log('Processed source file');
 
-    // TODO: Find a way to parse the svg file and get its width and height
-    // It's only XML after all!
+    launch({
+        port: 9222,
+        chromeFlags: ['--headless', '--disable-gpu'],
+    }).then(chrome => {
+        console.log('Started google chrome in headless mode');
 
-    // FIXME: This does not work, I currently have to launch this command manually
-    exec('google-chrome --headless --hide-scrollbars --remote-debugging-port=9222 --disable-gpu', error => {
-        if (error) {
-            console.error(error);
-            return;
-        }
-    });
-
-    console.log('Started google chrome in headless mode');
-
-    chromeRemoteInterface(async client => {
-        console.log('Connected to google chrome in headless mode');
-        
-        // Extract used DevTools domains.
-        const { DOM, Emulation, Network, Page, Runtime } = client;
-
-        // Enable events on domains we are interested in.
-        await Page.enable();
-        await DOM.enable();
-        await Network.enable();
-
-        // Set up viewport resolution, etc.
-        const deviceMetrics = {
-            width: viewportWidth,
-            height: viewportHeight,
-            deviceScaleFactor: 0,
-            mobile: false,
-            fitWindow: false,
-        };
-        await Emulation.setDeviceMetricsOverride(deviceMetrics);
-        await Emulation.setVisibleSize({ width: viewportWidth, height: viewportHeight });
-
-        // Navigate to target page
-        const url = `file:///${tmpFile}`;
-        console.log(`Openning ${url}`);
-        await Page.navigate({ url });
-
-        // Wait for page load event to take screenshot
-        Page.loadEventFired(async () => {
-            console.log(`Loaded ${url}`);
+        chromeRemoteInterface(async client => {
+            console.log('Connected to google chrome in headless mode');
             
-            // If the `full` CLI option was passed, we need to measure the height of
-            // the rendered page and use Emulation.setVisibleSize
-            if (fullPage) {
-                const { root: { nodeId: documentNodeId } } = await DOM.getDocument();
+            // Extract used DevTools domains.
+            const { DOM, Emulation, Network, Page, Runtime } = client;
 
-                // await Emulation.setVisibleSize({ width: viewportWidth, height: viewportHeight });
-                // This forceViewport call ensures that content outside the viewport is
-                // rendered, otherwise it shows up as grey. Possibly a bug?
-                await Emulation.forceViewport({ x: 0, y: 0, scale: 1 });
-            }
+            // Enable events on domains we are interested in.
+            await Page.enable();
+            await DOM.enable();
+            await Network.enable();
 
-            const screenshot = await Page.captureScreenshot({ format: 'png' });
-            const buffer = new Buffer(screenshot.data, 'base64');
+            // Set up viewport resolution, etc.
+            const deviceMetrics = {
+                width: viewportWidth,
+                height: viewportHeight,
+                deviceScaleFactor: 0,
+                mobile: false,
+                fitWindow: false,
+            };
+            await Emulation.setDeviceMetricsOverride(deviceMetrics);
+            await Emulation.setVisibleSize({ width: viewportWidth, height: viewportHeight });
 
-            writeFile(`output.png`, buffer, 'base64', err => {
-                if (err) {
-                    console.error(err);
-                    return;
+            // Navigate to target page
+            const url = `file:///${tmpFile}`;
+            console.log(`Openning ${url}`);
+            await Page.navigate({ url });
+
+            // Wait for page load event to take screenshot
+            Page.loadEventFired(async () => {
+                console.log(`Loaded ${url}`);
+                
+                // If the `full` CLI option was passed, we need to measure the height of
+                // the rendered page and use Emulation.setVisibleSize
+                if (fullPage) {
+                    const { root: { nodeId: documentNodeId } } = await DOM.getDocument();
+
+                    // await Emulation.setVisibleSize({ width: viewportWidth, height: viewportHeight });
+                    // This forceViewport call ensures that content outside the viewport is
+                    // rendered, otherwise it shows up as grey. Possibly a bug?
+                    await Emulation.forceViewport({ x: 0, y: 0, scale: 1 });
                 }
-                console.log('Screenshot saved');
-                client.close();
+
+                const screenshot = await Page.captureScreenshot({ format: 'png' });
+                const buffer = new Buffer(screenshot.data, 'base64');
+
+                writeFile(`output.png`, buffer, 'base64', err => {
+                    if (err) {
+                        console.error(err);
+                        return;
+                    }
+                    console.log('Screenshot saved');
+                    client.close();
+                    chrome.kill();
+                });
             });
+        }).on('error', err => {
+            console.error('Cannot connect to browser:', err);
         });
-    }).on('error', err => {
-        console.error('Cannot connect to browser:', err);
     });
 });
