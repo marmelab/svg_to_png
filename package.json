@@ -6,6 +6,7 @@
   "dependencies": {
     "chrome-launcher": "~0.2.0",
     "chrome-remote-interface": "~0.23.2",
+    "debug": "~2.6.8",
     "minimist": "~1.2.0",
     "rimraf": "~2.6.1",
     "tmp": "~0.0.31"

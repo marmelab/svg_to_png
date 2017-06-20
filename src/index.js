@@ -1,85 +1,137 @@
-import { createWriteStream, writeFile } from 'fs';
+import { createWriteStream, writeFile, writeFileSync } from 'fs';
 import { tmpNameSync } from 'tmp';
 import minimist from 'minimist';
 import chromeRemoteInterface from 'chrome-remote-interface';
 import { launch } from 'chrome-launcher';
+import debugFactory from 'debug';
 
+const debug = debugFactory('svg_to_png');
+
+const getConvertToPngScript = (width, height) => `
+new Promise((resolve) => {
+    try {
+        const svg = document.querySelector('svg');
+        const svgString = new XMLSerializer().serializeToString(svg);
+
+        const canvas = document.createElement("canvas");
+        canvas.setAttribute('width', '${width}px');
+        canvas.setAttribute('height', '${height}px');
+        const ctx = canvas.getContext("2d");
+        const DOMURL = self.URL || self.webkitURL || self;
+        const img = new Image();
+        const svgBlob = new Blob([svgString], {type: "image/svg+xml;charset=utf-8"});
+        const url = DOMURL.createObjectURL(svgBlob);
+        img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+            const png = canvas.toDataURL("image/png");
+            DOMURL.revokeObjectURL(png);
+            resolve(png);
+        };
+        img.src = url;
+    } catch (error) {
+        resolve(error);
+    }
+})
+`
 const argv = minimist(process.argv.slice(2));
 const viewportWidth = argv.viewportWidth || 1440;
 const viewportHeight = argv.viewportHeight || 900;
 const fullPage = true;
 
-const tmpFile = tmpNameSync();
-const tmpStream = createWriteStream(tmpFile);
+const tmpHtmlFile = tmpNameSync();
 
-process.stdin.pipe(tmpStream);
+const getSvgFromStdIn = () => new Promise((resolve, reject) => {
+    let data;
 
-process.stdin.on('end', () => {
-    console.log('Processed source file');
+    process.stdin.on('readable', () => {
+        const chunk = process.stdin.read();
+        if (chunk !== null) {
+            data += chunk;
+        }
+    });
 
-    launch({
-        port: 9222,
-        chromeFlags: ['--headless', '--disable-gpu'],
-    }).then(chrome => {
-        console.log('Started google chrome in headless mode');
+    process.stdin.on('end', () => {
+        resolve(data);
+    });
 
-        chromeRemoteInterface(async client => {
-            console.log('Connected to google chrome in headless mode');
-            
-            // Extract used DevTools domains.
-            const { DOM, Emulation, Network, Page, Runtime } = client;
+    process.stdin.on('error', error => {
+        reject(error);
+    });
+})
+try {
+    getSvgFromStdIn().then(svg => {
+        debug('Processed source file', svg);
 
-            // Enable events on domains we are interested in.
-            await Page.enable();
-            await DOM.enable();
-            await Network.enable();
+        const widthMatches = /svg[\s\S]*width="([\d.]*)px"/.exec(svg);
+        const width = widthMatches ? parseInt(widthMatches[1]) : viewportWidth;
 
-            // Set up viewport resolution, etc.
-            const deviceMetrics = {
-                width: viewportWidth,
-                height: viewportHeight,
-                deviceScaleFactor: 0,
-                mobile: false,
-                fitWindow: false,
-            };
-            await Emulation.setDeviceMetricsOverride(deviceMetrics);
-            await Emulation.setVisibleSize({ width: viewportWidth, height: viewportHeight });
+        const heightMatches = /svg[\s\S]*height="([\d.]*)px"/.exec(svg);
+        const height = heightMatches ? parseInt(heightMatches[1]) : viewportHeight;
 
-            // Navigate to target page
-            const url = `file:///${tmpFile}`;
-            console.log(`Openning ${url}`);
-            await Page.navigate({ url });
+        debug('parsed dimensions: %d %d', width, height);
 
-            // Wait for page load event to take screenshot
-            Page.loadEventFired(async () => {
-                console.log(`Loaded ${url}`);
+        writeFileSync(tmpHtmlFile, `
+        <html>
+            <body>
+                ${svg}
+            </body>
+        </html>
+        `);
+
+        launch({
+            port: 9222,
+            chromeFlags: ['--headless', '--disable-gpu'],
+        }).then(chrome => {
+            debug('Started google chrome in headless mode');
+
+            chromeRemoteInterface(async client => {
+                debug('Connected to google chrome in headless mode');
                 
-                // If the `full` CLI option was passed, we need to measure the height of
-                // the rendered page and use Emulation.setVisibleSize
-                if (fullPage) {
-                    const { root: { nodeId: documentNodeId } } = await DOM.getDocument();
+                // Extract used DevTools domains.
+                const { DOM, Emulation, Log, Network, Page, Runtime } = client;
 
-                    // await Emulation.setVisibleSize({ width: viewportWidth, height: viewportHeight });
-                    // This forceViewport call ensures that content outside the viewport is
-                    // rendered, otherwise it shows up as grey. Possibly a bug?
-                    await Emulation.forceViewport({ x: 0, y: 0, scale: 1 });
-                }
+                // Enable events on domains we are interested in.
+                await Page.enable();
+                await DOM.enable();
+                await Network.enable();
+                await Log.enable();
 
-                const screenshot = await Page.captureScreenshot({ format: 'png' });
-                const buffer = new Buffer(screenshot.data, 'base64');
+                // Set up viewport resolution, etc.
+                const deviceMetrics = {
+                    width: width,
+                    height: height,
+                    deviceScaleFactor: 0,
+                    mobile: false,
+                    fitWindow: false,
+                };
+                await Emulation.setDeviceMetricsOverride(deviceMetrics);
+                await Emulation.setVisibleSize({ width: width, height: height });
 
-                writeFile(`output.png`, buffer, 'base64', err => {
-                    if (err) {
-                        console.error(err);
-                        return;
+                // Navigate to target page
+                const url = `file:///${tmpHtmlFile}`;
+                debug(`Openning ${url}`);
+                // Page.addScriptToEvaluateOnLoad(convertToPngScript)
+                await Page.navigate({ url });
+
+                // Wait for page load event to take screenshot
+                Page.loadEventFired(async () => {
+                    debug(`Loaded ${url}`);
+
+                    const runtimeResult = await Runtime.evaluate({ expression: getConvertToPngScript(width, height), awaitPromise: true });
+                    if (runtimeResult.result) {
+                        console.log('PNG:\r\n')
+                        console.log(runtimeResult.result.value);
                     }
-                    console.log('Screenshot saved');
                     client.close();
                     chrome.kill();
                 });
+            }).on('error', err => {
+                console.error('Cannot connect to browser:', err);
+                client.close();
+                chrome.kill();
             });
-        }).on('error', err => {
-            console.error('Cannot connect to browser:', err);
         });
     });
-});
+} catch (error) {
+    console.error(error);
+}
