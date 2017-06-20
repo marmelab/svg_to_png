@@ -3,15 +3,24 @@ import chalk from 'chalk';
 import clip from 'cliparoo';
 import { readFileSync } from 'fs';
 
+import startServer from './server';
 import getSvgFromStdIn from './getSvgFromStdIn';
 import convertToPngDataUrl from './convertToPngDataUrl';
 
 const print = console.log; // eslint-disable-line
 const formatSource = chalk.bold.green;
-const formatClipboard = chalk.bold.gray;
+const formatMessage = chalk.bold.gray;
 
 const executeShellCommand = async options => {
     const sources = [];
+
+    if (options.http) {
+        print(
+            formatMessage(`Starting server on`),
+            `http://localhost:${options.port}`,
+        );
+        await startServer(parseInt(options.port));
+    }
 
     if (options.files && options.files.length > 0) {
         sources.push(
@@ -39,7 +48,7 @@ const executeShellCommand = async options => {
             clip(result.pngDataUrl);
             print('\n');
             print(
-                formatClipboard(
+                formatMessage(
                     `The data url for ${result.source} has been copied in your clipboard`,
                 ),
             );
@@ -61,7 +70,6 @@ commander
         '--port <n>',
         'The port of the http server. Default is 3000',
         parseInt,
-        3000,
     );
 
 const options = commander.parse(process.argv);
