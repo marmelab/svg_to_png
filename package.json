@@ -17,6 +17,6 @@
     "babel-preset-env": "~1.5.2"
   },
   "scripts": {
-    "build": "babel ./src/index.js --out-file ./bin/svg_to_png"
+    "build": "babel ./src --out-dir ./bin"
   }
 }
