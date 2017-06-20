@@ -28,75 +28,85 @@ const loadUrl = async ({ client, url, width, height }) => {
     await Page.navigate({ url });
 };
 
-const getPngFromChrome = ({ client, url, width, height }) => new Promise((resolve, reject) => {
-    debug('Connected to google chrome in headless mode');
-    
-    loadUrl({ client, url, width, height }).then(() => {
-        const { Page, Runtime } = client;
+const getPngFromChrome = ({ client, url, width, height }) =>
+    new Promise((resolve, reject) => {
+        debug('Connected to google chrome in headless mode');
 
-        // Wait for page load event to execture our script
-        Page.loadEventFired(async () => {
-            debug(`Loaded ${url}`);
+        loadUrl({ client, url, width, height }).then(() => {
+            const { Page, Runtime } = client;
 
-            const runtimeResult = await Runtime.evaluate({
-                expression: getConvertToPngScript(width, height),
-                awaitPromise: true,
+            // Wait for page load event to execture our script
+            Page.loadEventFired(async () => {
+                debug(`Loaded ${url}`);
+
+                const runtimeResult = await Runtime.evaluate({
+                    expression: getConvertToPngScript(width, height),
+                    awaitPromise: true,
+                });
+
+                if (runtimeResult.result) {
+                    resolve(runtimeResult.result.value);
+                } else {
+                    reject(runtimeResult.exceptionDetails);
+                }
             });
-
-            if (runtimeResult.result) {
-                resolve(runtimeResult.result.value);
-            } else {
-                reject(runtimeResult.exceptionDetails);
-            }
         });
     });
-});
 
 export default async svg => {
     debug('Processed source file', svg);
 
     const widthMatches = /svg[\s\S]*width="([\d.]*)px"/.exec(svg);
-    const width = widthMatches ? parseInt(widthMatches[1]) : false;
+    const width = widthMatches ? Math.ceil(parseFloat(widthMatches[1])) : false;
 
     const heightMatches = /svg[\s\S]*height="([\d.]*)px"/.exec(svg);
-    const height = heightMatches ? parseInt(heightMatches[1]) : false;
+    const height = heightMatches
+        ? Math.ceil(parseFloat(heightMatches[1]))
+        : false;
 
     debug('parsed dimensions: %d %d', width, height);
 
     const tmpHtmlFile = tmpNameSync();
-    writeFileSync(tmpHtmlFile, `
-    <html>
-        <body>
-            ${svg}
-        </body>
-    </html>
-    `);
+    writeFileSync(
+        tmpHtmlFile,
+        `<html>
+            <body>
+                ${svg}
+            </body>
+        </html>`,
+    );
     const url = `file:///${tmpHtmlFile}`;
 
     const chrome = await launch({
         port: 9222,
         chromeFlags: ['--headless', '--disable-gpu'],
     });
-    
+
     debug('Started google chrome in headless mode');
 
     return new Promise((resolve, reject) => {
+        let clientInstance;
         chromeRemoteInterface(client => {
-            getPngFromChrome({ client, url, width, height })
-                .then(pngDataUrl => {
+            clientInstance = client;
+
+            getPngFromChrome({ client, url, width, height }).then(
+                pngDataUrl => {
+                    client.close();
+                    chrome.kill();
                     resolve(pngDataUrl);
+                },
+                error => {
                     client.close();
                     chrome.kill();
-                }, error => {
                     reject(error);
-                    client.close();
-                    chrome.kill();
-                });
-        })
-        .on('error', err => {
-            reject(err);
-            client.close();
+                },
+            );
+        }).on('error', err => {
+            if (clientInstance) {
+                clientInstance.close();
+            }
             chrome.kill();
+            reject(err);
         });
     });
-}
+};
