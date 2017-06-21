@@ -27,11 +27,19 @@ The server will listen to `POST` requests containing the svg as their body and w
 
 ## Running in a container
 
-This only work for the http-server mode. It might be usefull if you want to include it in a docker-compose file for use from another API.
+```sh
+cat kiwi.svg | docker run --name svg_to_png -i svg_to_png
+```
+
+Note the `-i` which is required for piping to work.
+
+Another option would be to run this container as an http-server (could be part of a docker-compose for use from another API):
 
 ```sh
 docker run --rm -p 3000:3000 --security-opt seccomp=unconfined --name svg_to_png marmelab/svg_to_png --http
 ```
+
+The `--security-opt seccomp=unconfined` is currently required so that we can run chrome inside the container and access it from the API.
 
 ## Development
 
