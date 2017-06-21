@@ -28,7 +28,7 @@ The server will listen to `POST` requests containing the svg as their body and w
 ## Running in a container
 
 ```sh
-cat kiwi.svg | docker run --name svg_to_png -i svg_to_png
+cat kiwi.svg | docker run -i svg_to_png
 ```
 
 Note the `-i` which is required for piping to work.
