@@ -25,6 +25,14 @@ svg_to_png --http
 
 The server will listen to `POST` requests containing the svg as their body and will return the data-url for the converted PNG in the response body.
 
+## Running in a container
+
+This only work for the http-server mode. It might be usefull if you want to include it in a docker-compose file for use from another API.
+
+```sh
+docker run --rm -p 3000:3000 --security-opt seccomp=unconfined --name svg_to_png marmelab/svg_to_png --http
+```
+
 ## Development
 
 Install dependencies:

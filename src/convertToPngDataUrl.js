@@ -79,7 +79,7 @@ export default async svg => {
 
     const chrome = await launch({
         port: 9222,
-        chromeFlags: ['--headless', '--disable-gpu'],
+        chromeFlags: ['--headless', '--disable-gpu', '--no-sandbox'],
     });
 
     debug('Started google chrome in headless mode');
