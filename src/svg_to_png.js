@@ -2,6 +2,7 @@ import commander from 'commander';
 import chalk from 'chalk';
 import clip from 'cliparoo';
 import { readFileSync } from 'fs';
+import { platform } from 'os';
 
 import startServer from './server';
 import getSvgFromStdIn from './getSvgFromStdIn';
@@ -45,13 +46,25 @@ const executeShellCommand = async options => {
         if (results.length === 1) {
             print('\n');
             print(result.pngDataUrl);
-            clip(result.pngDataUrl);
-            print('\n');
-            print(
-                formatMessage(
-                    `The data url for ${result.source} has been copied in your clipboard`,
-                ),
-            );
+
+            try {
+                clip(result.pngDataUrl);
+                print('\n');
+                print(
+                    formatMessage(
+                        `The data url for ${result.source} has been copied in your clipboard`,
+                    ),
+                );
+            } catch (error) {
+                if (platform() === 'linux') {
+                    print(
+                        formatMessage(
+                            'Install xclip if you want the url to be copied in your clipboard automatically.',
+                        ),
+                    );
+                }
+            }
+
             return;
         }
 
