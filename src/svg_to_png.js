@@ -12,6 +12,28 @@ const print = console.log; // eslint-disable-line
 const formatSource = chalk.bold.green;
 const formatMessage = chalk.bold.gray;
 
+commander
+    .version('0.0.1')
+    .description('An svg to png converter using chrome in headless mode.')
+    .usage(
+        `
+    # passing file paths as arguments
+    svg_to_png [options] <file ...>
+
+    # piping a file
+    svg_to_png [options] < file
+
+    # starting an http server listening to POST requests with the svg as their body
+    svg_to_png --http
+    `,
+    )
+    .option('--http', 'Starts the HTTP server')
+    .option(
+        '--port <n>',
+        'The port of the http server. Default is 3000',
+        parseInt,
+    );
+
 const executeShellCommand = async options => {
     const sources = [];
 
@@ -27,7 +49,11 @@ const executeShellCommand = async options => {
             })),
         );
     } else {
-        const svg = await getSvgFromStdIn();
+        const svg = await getSvgFromStdIn().catch(error => {
+            print(error.message);
+            commander.outputHelp();
+            process.exit(1);
+        });
         sources.push({ svg, source: 'stdin' });
     }
     const promises = sources.map(({ source, svg }) =>
@@ -70,28 +96,6 @@ const executeShellCommand = async options => {
         print(result.pngDataUrl);
     });
 };
-
-commander
-    .version('0.0.1')
-    .description('An svg to png converter using chrome in headless mode.')
-    .usage(
-        `
-    # passing file paths as arguments
-    svg_to_png [options] <file ...>
-
-    # piping a file
-    svg_to_png [options] < file
-
-    # starting an http server listening to POST requests with the svg as their body
-    svg_to_png --http
-    `,
-    )
-    .option('--http', 'Starts the HTTP server')
-    .option(
-        '--port <n>',
-        'The port of the http server. Default is 3000',
-        parseInt,
-    );
 
 const options = commander.parse(process.argv);
 

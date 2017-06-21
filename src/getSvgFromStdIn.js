@@ -16,4 +16,6 @@ export default () =>
         process.stdin.on('error', error => {
             reject(error);
         });
+
+        setTimeout(() => reject(new Error('No entry detected aborting')), 2000);
     });
