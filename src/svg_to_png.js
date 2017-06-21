@@ -57,9 +57,7 @@ const executeShellCommand = async options => {
                 'Did you mean to run in server mode ? (y/n default n)',
             );
             if (answer.toLowerCase() === 'y') {
-                const port = await rl.question('Which port ?');
-                rl.close();
-                await startServer(parseInt(port));
+                await startServer();
                 process.exit(0);
             }
             commander.help();
