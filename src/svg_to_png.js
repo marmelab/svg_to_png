@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import clip from 'cliparoo';
 import { readFileSync } from 'fs';
 import { platform } from 'os';
+import readline from './readline';
 
 import startServer from './server';
 import getSvgFromStdIn from './getSvgFromStdIn';
@@ -49,10 +50,19 @@ const executeShellCommand = async options => {
             })),
         );
     } else {
-        const svg = await getSvgFromStdIn().catch(error => {
+        const svg = await getSvgFromStdIn().catch(async error => {
             print(error.message);
-            commander.outputHelp();
-            process.exit(1);
+            const rl = readline();
+            const answer = await rl.question(
+                'Did you mean to run in server mode ? (y/n default n)',
+            );
+            if (answer.toLowerCase() === 'y') {
+                const port = await rl.question('Which port ?');
+                rl.close();
+                await startServer(parseInt(port));
+                process.exit(0);
+            }
+            commander.help();
         });
         sources.push({ svg, source: 'stdin' });
     }
