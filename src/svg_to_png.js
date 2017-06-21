@@ -33,13 +33,14 @@ commander
         '--port <n>',
         'The port of the http server. Default is 3000',
         parseInt,
+        3000,
     );
 
 const executeShellCommand = async options => {
     const sources = [];
 
     if (options.http) {
-        await startServer(parseInt(options.port));
+        await startServer(options.port);
     }
 
     if (options.files && options.files.length > 0) {
@@ -110,5 +111,5 @@ const options = commander.parse(process.argv);
 executeShellCommand({
     files: options.args,
     http: options.http,
-    port: options.port,
+    port: isNaN(options.port) ? undefined : options.port,
 }).then(() => process.exit());
