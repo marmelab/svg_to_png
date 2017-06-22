@@ -31,12 +31,14 @@ commander
         'Where to output the file: either a file paht for single source or a directory path for multiple sources',
     )
     .option(
-        '--width',
+        '--width <n>',
         'The width of the generated PNG (if height is not specified, tries to preserve proportions)',
+        parseInt,
     )
     .option(
-        '--height',
+        '--height <n>',
         'The height of the generated PNG (if width is not specified, tries to preserve proportions)',
+        parseInt,
     )
     .option('--http', 'Starts the HTTP server')
     .option(
@@ -100,10 +102,10 @@ const options = commander.parse(process.argv);
 executeShellCommand({
     out: options.out,
     files: options.args,
-    height: options.height,
+    height: isNaN(options.height) ? undefined : options.height,
     http: options.http,
     port: isNaN(options.port) ? undefined : options.port,
-    width: options.width,
+    width: isNaN(options.width) ? undefined : options.width,
 })
     .then(() => process.exit())
     .catch(error => console.error(error));
