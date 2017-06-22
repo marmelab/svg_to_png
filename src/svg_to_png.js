@@ -1,17 +1,14 @@
 import commander from 'commander';
-import chalk from 'chalk';
 import { readFileSync } from 'fs';
-import { platform } from 'os';
-
-import convertToPngDataUrl from './convertToPngDataUrl';
-import getSvgFromStdIn from './getSvgFromStdIn';
 import readline from './readline';
 import startServer from './server';
-import writeToClipboard from './writeToClipboard';
+import getSvgFromStdIn from './getSvgFromStdIn';
+import convertToPng from './convertToPng';
+import toPngDataUrl from './toPngDataUrl';
+import outputResultsAsDataUrls from './outputResultsAsDataUrls';
+import outputResultsAsFiles from './outputResultsAsFiles';
 
 const print = console.log; // eslint-disable-line
-const formatSource = chalk.bold.green;
-const formatMessage = chalk.bold.gray;
 
 commander
     .version('0.0.1')
@@ -28,6 +25,10 @@ commander
     svg_to_png --http
     `,
     )
+    .option(
+        '--out [value]',
+        'Where to output the file: either a file paht for single source or a directory path for multiple sources',
+    )
     .option('--http', 'Starts the HTTP server')
     .option(
         '--port <n>',
@@ -35,6 +36,14 @@ commander
         parseInt,
         3000,
     );
+
+const handleResults = async (results, options) => {
+    if (options.out) {
+        return outputResultsAsFiles(results, options);
+    }
+
+    return outputResultsAsDataUrls(results);
+};
 
 const executeShellCommand = async options => {
     const sources = [];
@@ -66,50 +75,23 @@ const executeShellCommand = async options => {
         sources.push({ svg, source: 'stdin' });
     }
     const promises = sources.map(({ source, svg }) =>
-        convertToPngDataUrl(svg).then(pngDataUrl => ({
+        convertToPng(svg).then(data => ({
             source,
-            pngDataUrl,
+            data: options.out ? data : toPngDataUrl(data),
         })),
     );
 
     const results = await Promise.all(promises);
-    results.forEach(result => {
-        if (results.length === 1) {
-            print('\n');
-            print(result.pngDataUrl);
 
-            try {
-                writeToClipboard(result.pngDataUrl);
-                print('\n');
-                print(
-                    formatMessage(
-                        `The data url for ${result.source} has been copied in your clipboard`,
-                    ),
-                );
-            } catch (error) {
-                if (platform() === 'linux') {
-                    print(
-                        formatMessage(
-                            'Install xclip if you want the url to be copied in your clipboard automatically.',
-                        ),
-                    );
-                }
-            }
-
-            return;
-        }
-
-        print('\n');
-        print(formatSource(result.source));
-        print('\n');
-        print(result.pngDataUrl);
-    });
+    await handleResults(results, options);
 };
 
 const options = commander.parse(process.argv);
-
 executeShellCommand({
+    out: options.out,
     files: options.args,
     http: options.http,
     port: isNaN(options.port) ? undefined : options.port,
-}).then(() => process.exit());
+})
+    .then(() => process.exit())
+    .catch(error => console.error(error));

@@ -3,7 +3,7 @@ import bodyParser from 'body-parser';
 import chalk from 'chalk';
 const { choosePort } = require('react-dev-utils/WebpackDevServerUtils');
 
-import convertToPngDataUrl from './convertToPngDataUrl';
+import convertToPng from './convertToPng';
 
 const print = console.log; // eslint-disable-line
 const formatMessage = chalk.bold.gray;
@@ -18,7 +18,7 @@ export default (port = 3000) => {
         app.post('/', async (req, res) => {
             const svg = req.body;
             try {
-                const png = await convertToPngDataUrl(svg);
+                const png = await convertToPng(svg);
                 res.send(png);
             } catch (error) {
                 res.status(500);
