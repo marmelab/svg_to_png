@@ -969,11 +969,11 @@ cli-width@^2.0.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/cli-width/-/cli-width-2.1.0.tgz#b234ca209b29ef66fc518d9b98d5847b00edf00a"
 
-cliparoo@~1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/cliparoo/-/cliparoo-1.1.1.tgz#05412b4735cfa5e72dbde48423e441a19faa6552"
+clipboardy@~1.1.4:
+  version "1.1.4"
+  resolved "https://registry.yarnpkg.com/clipboardy/-/clipboardy-1.1.4.tgz#51b17574fc682588e2dd295cfa6e6aa109eab5ee"
   dependencies:
-    shell-escape "0.0.0"
+    execa "^0.6.0"
 
 cliui@^2.1.0:
   version "2.1.0"
@@ -3712,10 +3712,6 @@ shebang-command@^1.2.0:
 shebang-regex@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/shebang-regex/-/shebang-regex-1.0.0.tgz#da42f49740c0b42db2ca9728571cb190c98efea3"
-
-shell-escape@0.0.0:
-  version "0.0.0"
-  resolved "https://registry.yarnpkg.com/shell-escape/-/shell-escape-0.0.0.tgz#c1f0b72aeb2be606a2e271f02651fe18efdcd765"
 
 shell-quote@1.6.1:
   version "1.6.1"
