@@ -1,7 +1,6 @@
 import chromeRemoteInterface from 'chrome-remote-interface';
 import { launch } from 'chrome-launcher';
 import debugFactory from 'debug';
-import getConvertToPngScript from './getConvertToPngScript';
 import convertHtmlToDataUrl from './convertHtmlToDataUrl';
 
 const debug = debugFactory('svg_to_png');
@@ -27,82 +26,77 @@ const loadUrl = async ({ client, url, width, height }) => {
     await Page.navigate({ url });
 };
 
-const getPngFromChrome = ({ client, url, width, height }) =>
-    new Promise((resolve, reject) => {
-        debug('Connected to google chrome in headless mode');
+const getPngFromChrome = async ({ client, url, width, height }) => {
+    debug('Connected to google chrome in headless mode');
 
-        loadUrl({ client, url, width, height }).then(() => {
-            const { Page, Runtime } = client;
+    await loadUrl({ client, url, width, height });
+    const { Page } = client;
 
-            // Wait for page load event to execture our script
-            Page.loadEventFired(async () => {
-                debug(`Loaded ${url}`);
+    // Wait for page load event to execture our script
+    await Page.loadEventFired();
+    debug(`Loaded ${url}`);
 
-                const runtimeResult = await Runtime.evaluate({
-                    expression: getConvertToPngScript(width, height),
-                    awaitPromise: true,
-                });
-
-                if (runtimeResult.result) {
-                    resolve(runtimeResult.result.value);
-                } else {
-                    reject(runtimeResult.exceptionDetails);
-                }
-            });
-        });
+    const screenshot = await Page.captureScreenshot({
+        fromSurface: false,
     });
+
+    return `data:image/png;base64,${screenshot.data}`;
+};
 
 export default async svg => {
     debug('Processed source file', svg);
 
-    const widthMatches = /svg[\s\S]*width="([\d.]*)px"/.exec(svg);
+    const widthMatches = /svg[\s\S]*width="([\d.\S]*)"/.exec(svg);
     const width = widthMatches ? Math.ceil(parseFloat(widthMatches[1])) : false;
 
-    const heightMatches = /svg[\s\S]*height="([\d.]*)px"/.exec(svg);
+    const heightMatches = /svg[\s\S]*height="([\d.\S]*)"/.exec(svg);
     const height = heightMatches
         ? Math.ceil(parseFloat(heightMatches[1]))
         : false;
 
     debug('parsed dimensions: %d %d', width, height);
 
-    const url = convertHtmlToDataUrl(`<html>
+    const html = `<html>
+            <style>
+                body { margin: 0; padding: 0; }
+            </style>
             <body>
                 ${svg}
             </body>
-        </html>`);
+        </html>`;
+    debug('HTML data', html);
 
+    const url = convertHtmlToDataUrl(html);
     debug('HTML dataurl', url);
 
     const chrome = await launch({
         port: 9222,
-        chromeFlags: ['--headless', '--disable-gpu', '--no-sandbox'],
+        chromeFlags: [
+            '--headless',
+            '--disable-gpu',
+            '--no-sandbox',
+            '--no-scrollbars',
+        ],
     });
 
     debug('Started google chrome in headless mode');
 
-    return new Promise((resolve, reject) => {
-        let clientInstance;
-        chromeRemoteInterface(client => {
-            clientInstance = client;
+    let client;
 
-            getPngFromChrome({ client, url, width, height }).then(
-                pngDataUrl => {
-                    client.close();
-                    chrome.kill();
-                    resolve(pngDataUrl);
-                },
-                error => {
-                    client.close();
-                    chrome.kill();
-                    reject(error);
-                },
-            );
-        }).on('error', err => {
-            if (clientInstance) {
-                clientInstance.close();
-            }
-            chrome.kill();
-            reject(err);
+    try {
+        client = await chromeRemoteInterface();
+
+        const pngDataUrl = await getPngFromChrome({
+            client,
+            url,
+            width,
+            height,
         });
-    });
+        return pngDataUrl;
+    } catch (error) {
+        console.error(error);
+    } finally {
+        client.close();
+        chrome.kill();
+    }
 };
