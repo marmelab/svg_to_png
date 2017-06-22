@@ -19,9 +19,10 @@ export default (port = 3000) => {
         app.post('/', async (req, res) => {
             const svg = req.body;
             const asDataUrl = req.query['data-url'];
+            const { height, width } = req.query;
 
             try {
-                const data = await convertToPng(svg);
+                const data = await convertToPng(svg, { height, width });
                 if (asDataUrl) {
                     res.end(toPngDataUrl(data));
                     return;
