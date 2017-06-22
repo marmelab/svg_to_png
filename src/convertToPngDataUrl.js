@@ -14,17 +14,17 @@ const loadUrl = async ({ client, url, width, height }) => {
     await Page.enable();
     // Set up viewport resolution, etc.
     const deviceMetrics = {
-        width: width,
-        height: height,
+        width,
+        height,
         deviceScaleFactor: 0,
         mobile: false,
         fitWindow: false,
     };
     await Emulation.setDeviceMetricsOverride(deviceMetrics);
-    await Emulation.setVisibleSize({ width: width, height: height });
+    await Emulation.setVisibleSize({ width, height });
 
     // Navigate to target page
-    debug(`Openning ${url}`);
+    debug(`Opening ${url}`);
     await Page.navigate({ url });
 };
 

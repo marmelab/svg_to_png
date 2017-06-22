@@ -30,6 +30,5 @@ COPY ./src /usr/src/app/src
 RUN npm run build
 RUN chmod +x ./dist/svg_to_png.js
 EXPOSE 3000
-EXPOSE 9222
 
 ENTRYPOINT ["node", "./dist/svg_to_png.js", "--port", "3000"]
