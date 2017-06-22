@@ -1,13 +1,13 @@
 import commander from 'commander';
 import chalk from 'chalk';
-import clip from 'cliparoo';
 import { readFileSync } from 'fs';
 import { platform } from 'os';
-import readline from './readline';
 
-import startServer from './server';
-import getSvgFromStdIn from './getSvgFromStdIn';
 import convertToPngDataUrl from './convertToPngDataUrl';
+import getSvgFromStdIn from './getSvgFromStdIn';
+import readline from './readline';
+import startServer from './server';
+import writeToClipboard from './writeToClipboard';
 
 const print = console.log; // eslint-disable-line
 const formatSource = chalk.bold.green;
@@ -79,7 +79,7 @@ const executeShellCommand = async options => {
             print(result.pngDataUrl);
 
             try {
-                clip(result.pngDataUrl);
+                writeToClipboard(result.pngDataUrl);
                 print('\n');
                 print(
                     formatMessage(
