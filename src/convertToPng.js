@@ -44,10 +44,10 @@ const getPngFromChrome = async ({ client, url, width, height }) => {
     return screenshot.data;
 };
 
-export default async svg => {
+export default async (svg, options) => {
     debug('Processed source file', svg);
 
-    const { width, height } = getDimensions(svg, {});
+    const { width, height } = getDimensions(svg, options);
 
     debug('parsed dimensions: %d %d', width, height);
 
