@@ -40,7 +40,7 @@ const getPngFromChrome = async ({ client, url, width, height }) => {
         fromSurface: false,
     });
 
-    return `data:image/png;base64,${screenshot.data}`;
+    return screenshot.data;
 };
 
 export default async svg => {
