@@ -1,5 +1,6 @@
 import commander from 'commander';
 import { readFileSync } from 'fs';
+
 import readline from './readline';
 import startServer from './server';
 import getSvgFromStdIn from './getSvgFromStdIn';
@@ -74,6 +75,7 @@ const executeShellCommand = async options => {
         });
         sources.push({ svg, source: 'stdin' });
     }
+
     const promises = sources.map(({ source, svg }) =>
         convertToPng(svg).then(data => ({
             source,

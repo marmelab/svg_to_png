@@ -2,6 +2,7 @@ import chromeRemoteInterface from 'chrome-remote-interface';
 import { launch } from 'chrome-launcher';
 import debugFactory from 'debug';
 import convertHtmlToDataUrl from './convertHtmlToDataUrl';
+import getDimensions from './getDimensions';
 
 const debug = debugFactory('svg_to_png');
 
@@ -46,20 +47,17 @@ const getPngFromChrome = async ({ client, url, width, height }) => {
 export default async svg => {
     debug('Processed source file', svg);
 
-    const widthMatches = /svg[\s\S]*width="([\d.\S]*)"/.exec(svg);
-    const width = widthMatches ? Math.ceil(parseFloat(widthMatches[1])) : false;
-
-    const heightMatches = /svg[\s\S]*height="([\d.\S]*)"/.exec(svg);
-    const height = heightMatches
-        ? Math.ceil(parseFloat(heightMatches[1]))
-        : false;
+    const { width, height } = getDimensions(svg, {});
 
     debug('parsed dimensions: %d %d', width, height);
 
     const html = `<html>
-            <style>
-                body { margin: 0; padding: 0; }
-            </style>
+            <head>
+                <style>
+                    body { margin: 0; padding: 0; }
+                    svg { width: ${width}px; height: ${height}px; }
+                </style>
+            </head>
             <body>
                 ${svg}
             </body>
