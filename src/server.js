@@ -4,6 +4,7 @@ import chalk from 'chalk';
 const { choosePort } = require('react-dev-utils/WebpackDevServerUtils');
 
 import convertToPng from './convertToPng';
+import toPngDataUrl from './toPngDataUrl';
 
 const print = console.log; // eslint-disable-line
 const formatMessage = chalk.bold.gray;
@@ -17,9 +18,20 @@ export default (port = 3000) => {
 
         app.post('/', async (req, res) => {
             const svg = req.body;
+            const asDataUrl = req.query['data-url'];
+
             try {
-                const png = await convertToPng(svg);
-                res.send(png);
+                const data = await convertToPng(svg);
+                if (asDataUrl) {
+                    res.end(toPngDataUrl(data));
+                    return;
+                }
+
+                const buffer = new Buffer(data, 'base64');
+
+                res.setHeader('Content-Type', 'image/png');
+                res.setHeader('Content-Length', buffer.length);
+                res.end(buffer);
             } catch (error) {
                 res.status(500);
                 res.send(error.message);
