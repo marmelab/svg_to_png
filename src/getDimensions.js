@@ -1,13 +1,18 @@
-export default (svg, { width = 800, height }) => {
-    const widthMatches = /svg[\s\S].*?width="([\d.\S]*)"/.exec(svg);
+export default (svg, { width, height }) => {
+    const minWidth = 320;
+    const minHeight = 240;
+    const widthMatches = /svg[\s\S]*?width="(.*?)"/im.exec(svg);
     let svgWidth = widthMatches
         ? Math.ceil(parseFloat(widthMatches[1]))
-        : false;
+        : minWidth;
+    svgWidth = svgWidth < minWidth ? minWidth : svgWidth;
 
-    const heightMatches = /svg[\s\S].*?height="([\d.\S]*)"/.exec(svg);
-    const svgHeight = heightMatches
+    const heightMatches = /svg[\s\S]*?height="(.*?)"/im.exec(svg);
+    let svgHeight = heightMatches
         ? Math.ceil(parseFloat(heightMatches[1]))
-        : false;
+        : minHeight;
+    svgHeight = svgHeight < minHeight ? minHeight : svgHeight;
+
     if (width && height) {
         return { width, height };
     }
@@ -22,7 +27,7 @@ export default (svg, { width = 800, height }) => {
     if (height) {
         return {
             height,
-            width: svgWidth / svgHeight * width,
+            width: svgWidth / svgHeight * height,
         };
     }
 
