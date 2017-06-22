@@ -1,9 +1,8 @@
-import { writeFileSync } from 'fs';
 import chromeRemoteInterface from 'chrome-remote-interface';
 import { launch } from 'chrome-launcher';
-import { tmpNameSync } from 'tmp';
 import debugFactory from 'debug';
 import getConvertToPngScript from './getConvertToPngScript';
+import convertHtmlToDataUrl from './convertHtmlToDataUrl';
 
 const debug = debugFactory('svg_to_png');
 
@@ -66,16 +65,13 @@ export default async svg => {
 
     debug('parsed dimensions: %d %d', width, height);
 
-    const tmpHtmlFile = tmpNameSync();
-    writeFileSync(
-        tmpHtmlFile,
-        `<html>
+    const url = convertHtmlToDataUrl(`<html>
             <body>
                 ${svg}
             </body>
-        </html>`,
-    );
-    const url = `file:///${tmpHtmlFile}`;
+        </html>`);
+
+    debug('HTML dataurl', url);
 
     const chrome = await launch({
         port: 9222,
