@@ -46,10 +46,10 @@ const getPngFromChrome = async ({ client, url, width, height }) => {
 export default async svg => {
     debug('Processed source file', svg);
 
-    const widthMatches = /svg[\s\S]*width="([\d.\S]*)"/.exec(svg);
+    const widthMatches = /svg[\s\S].*?width="([\d.\S]*)"/.exec(svg);
     const width = widthMatches ? Math.ceil(parseFloat(widthMatches[1])) : false;
 
-    const heightMatches = /svg[\s\S]*height="([\d.\S]*)"/.exec(svg);
+    const heightMatches = /svg[\s\S].*?height="([\d.\S]*)"/.exec(svg);
     const height = heightMatches
         ? Math.ceil(parseFloat(heightMatches[1]))
         : false;
