@@ -1,4 +1,9 @@
 import commander from 'commander';
+<<<<<<< 7ffa9ad7e0af4e2946af77df66d076b194a7c30e
+=======
+import chalk from 'chalk';
+import clip from './clip';
+>>>>>>> add getDimensions helper
 import { readFileSync } from 'fs';
 import readline from './readline';
 import startServer from './server';
@@ -74,6 +79,7 @@ const executeShellCommand = async options => {
         });
         sources.push({ svg, source: 'stdin' });
     }
+
     const promises = sources.map(({ source, svg }) =>
         convertToPng(svg).then(data => ({
             source,
