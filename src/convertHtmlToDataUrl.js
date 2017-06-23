@@ -1,6 +1,12 @@
-import Datauri from 'datauri';
+const escapeHtml = html =>
+    html
+        .replace(/\s{2,}/g, '')
+        .replace(/%/g, '%25')
+        .replace(/&/g, '%26')
+        .replace(/#/g, '%23')
+        .replace(/"/g, '%22')
+        .replace(/'/g, '%27');
 
 export default html => {
-    const datauri = new Datauri();
-    return datauri.format('.html', html).content;
+    return `data:text/html;charset=UTF-8,${escapeHtml(html)}`;
 };
