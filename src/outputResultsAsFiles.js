@@ -8,16 +8,18 @@ const formatMessage = chalk.bold.gray;
 const formatError = chalk.bold.red;
 
 const writeFile = async (path, data) => {
-    const exists = existsSync(path);
     if (extname(path) !== '.png') {
         path += '.png';
     }
 
+    const exists = existsSync(path);
     if (exists) {
         const rl = readline();
         const answer = await rl.question(
             `A file named ${path} already exists. Shall we override it? (y/n default n)`,
         );
+
+        rl.close();
 
         if (answer.toLowerCase() !== 'y') {
             print(formatMessage('Exiting without overriding existing file'));
@@ -80,7 +82,11 @@ export default async (results, { out }) => {
                 : basename(results[0].source, '.svg'),
         );
     } else {
-        outFileName = basename(outFileName, '.svg');
+        const indexOfSvgExt = outFileName.indexOf('.svg');
+        outFileName = outFileName.substring(
+            0,
+            indexOfSvgExt > 0 ? indexOfSvgExt : undefined,
+        );
     }
 
     writeFile(outFileName, results[0].data);
