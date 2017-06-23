@@ -1,13 +1,5 @@
 import commander from 'commander';
-import { readFileSync } from 'fs';
-
-import question from './question';
-import startServer from './server';
-import getSvgFromStdIn from './getSvgFromStdIn';
-import convertToPng from './convertToPng';
-import toPngDataUrl from './toPngDataUrl';
-import outputResultsAsDataUrls from './outputResultsAsDataUrls';
-import outputResultsAsFiles from './outputResultsAsFiles';
+import executeShellCommand from './executeShellCommand';
 
 const print = console.log; // eslint-disable-line
 
@@ -52,64 +44,18 @@ commander
         3000,
     );
 
-const handleResults = async (results, options) => {
-    if (options.out) {
-        return outputResultsAsFiles(results, options);
-    }
-
-    return outputResultsAsDataUrls(results);
-};
-
-const executeShellCommand = async options => {
-    const sources = [];
-
-    if (options.http) {
-        await startServer(options.port);
-    }
-
-    if (options.files && options.files.length > 0) {
-        sources.push(
-            ...options.files.map(file => ({
-                source: file,
-                svg: readFileSync(file, 'utf8'),
-            })),
-        );
-    } else {
-        const svg = await getSvgFromStdIn().catch(async error => {
-            print(error.message);
-            const answer = question(
-                'Did you mean to run in server mode ? (y/n default n)',
-            );
-            if (answer) {
-                await startServer();
-                process.exit(0);
-            }
-            commander.help();
-        });
-        sources.push({ svg, source: 'stdin' });
-    }
-
-    const promises = sources.map(({ source, svg }) =>
-        convertToPng(svg, options).then(data => ({
-            source,
-            data: options.out ? data : toPngDataUrl(data),
-        })),
-    );
-
-    const results = await Promise.all(promises);
-
-    await handleResults(results, options);
-};
-
 const options = commander.parse(process.argv);
-executeShellCommand({
-    out: options.out,
-    files: options.args,
-    force: options.force,
-    height: isNaN(options.height) ? undefined : options.height,
-    http: options.http,
-    port: isNaN(options.port) ? undefined : options.port,
-    width: isNaN(options.width) ? undefined : options.width,
-})
+executeShellCommand(
+    {
+        out: options.out,
+        files: options.args,
+        force: options.force,
+        height: isNaN(options.height) ? undefined : options.height,
+        http: options.http,
+        port: isNaN(options.port) ? undefined : options.port,
+        width: isNaN(options.width) ? undefined : options.width,
+    },
+    () => commander.help,
+)
     .then(() => process.exit())
     .catch(error => console.error(error));
