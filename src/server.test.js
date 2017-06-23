@@ -2,7 +2,7 @@ import { handlePostFactory } from './server';
 
 describe('handlePost', () => {
     const convertToPng = jest.fn(() => Promise.resolve('svg'));
-    const handlePost = handlePostFactory(convertToPng);
+    const handlePost = handlePostFactory({ convertToPng });
     const res = {
         setHeader: jest.fn(),
         end: jest.fn(),

@@ -9,14 +9,14 @@ describe('executeShellCommand', () => {
     const question = jest.fn(() => false);
     const showHelp = jest.fn(() => Promise.resolve());
 
-    const executeShellCommand = executeShellCommandFactory(
+    const executeShellCommand = executeShellCommandFactory({
         startServer,
         readFileSync,
         getSvgFromStdIn,
         convertToPng,
         handleResults,
         question,
-    );
+    });
 
     afterEach(() => {
         jest.clearAllMocks();
@@ -29,14 +29,14 @@ describe('executeShellCommand', () => {
     });
 
     it('asks to start the http server if no inputs was given', async () => {
-        const executeShellCommandTimedOut = executeShellCommandFactory(
+        const executeShellCommandTimedOut = executeShellCommandFactory({
             startServer,
             readFileSync,
-            jest.fn(() => Promise.reject({ message: 'foo' })),
+            getSvgFromStdIn: jest.fn(() => Promise.reject({ message: 'foo' })),
             convertToPng,
             handleResults,
             question,
-        );
+        });
 
         await executeShellCommandTimedOut({}, showHelp);
 
@@ -46,14 +46,14 @@ describe('executeShellCommand', () => {
     });
 
     it('starts the http server if no inputs was given and user answered yes', async () => {
-        const executeShellCommandTimedOut = executeShellCommandFactory(
+        const executeShellCommandTimedOut = executeShellCommandFactory({
             startServer,
             readFileSync,
-            jest.fn(() => Promise.reject({ message: 'foo' })),
+            getSvgFromStdIn: jest.fn(() => Promise.reject({ message: 'foo' })),
             convertToPng,
             handleResults,
-            () => true,
-        );
+            question: () => true,
+        });
 
         await executeShellCommandTimedOut({}, showHelp);
 
@@ -61,14 +61,14 @@ describe('executeShellCommand', () => {
     });
 
     it('shows the help if no inputs was given', async () => {
-        const executeShellCommandTimedOut = executeShellCommandFactory(
+        const executeShellCommandTimedOut = executeShellCommandFactory({
             startServer,
             readFileSync,
-            jest.fn(() => Promise.reject({ message: 'foo' })),
+            getSvgFromStdIn: jest.fn(() => Promise.reject({ message: 'foo' })),
             convertToPng,
             handleResults,
             question,
-        );
+        });
 
         await executeShellCommandTimedOut({}, showHelp);
 

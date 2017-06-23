@@ -20,11 +20,11 @@ describe('convertToPng', () => {
     const chrome = { kill: jest.fn() };
     const launch = jest.fn(() => Promise.resolve(chrome));
     const convertHtmlToDataUrl = jest.fn(() => 'html_data_url');
-    const convertToPng = convertToPngFactory(
+    const convertToPng = convertToPngFactory({
         chromeRemoteInterface,
         launch,
         convertHtmlToDataUrl,
-    );
+    });
 
     it('starts chrome with correct options', async () => {
         await convertToPng('svg', {});

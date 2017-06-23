@@ -3,22 +3,21 @@ import bodyParser from 'body-parser';
 import chalk from 'chalk';
 const { choosePort } = require('react-dev-utils/WebpackDevServerUtils');
 
-import convertToPng from './convertToPng';
+import defaultConvertToPng from './convertToPng';
 import toPngDataUrl from './toPngDataUrl';
 
 const print = console.log; // eslint-disable-line
 const formatMessage = chalk.bold.gray;
 
-export const handlePostFactory = (convertToPngImpl = convertToPng) => async (
-    req,
-    res,
-) => {
+export const handlePostFactory = ({
+    convertToPng = defaultConvertToPng,
+}) => async (req, res) => {
     const svg = req.body;
     const asDataUrl = req.query['data-url'];
     const { height, width } = req.query;
 
     try {
-        const data = await convertToPngImpl(svg, { height, width });
+        const data = await convertToPng(svg, { height, width });
         if (asDataUrl) {
             res.end(toPngDataUrl(data));
             return;

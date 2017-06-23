@@ -1,24 +1,24 @@
 import { platform } from 'os';
 import chalk from 'chalk';
-import writeToClipboard from './writeToClipboard';
+import defaultWriteToClipboard from './writeToClipboard';
 
-const print = console.log; // eslint-disable-line
+const defaultPrint = console.log; // eslint-disable-line
 export const formatSource = chalk.bold.green;
 const formatMessage = chalk.bold.gray;
 
-export const outputResultsAsDataUrlsFactory = (
-    writeToClipboardImpl = writeToClipboard,
-    printImpl = print,
-) => results => {
+export const outputResultsAsDataUrlsFactory = ({
+    writeToClipboard = defaultWriteToClipboard,
+    print = defaultPrint,
+}) => results => {
     results.map(async result => {
         if (results.length === 1) {
-            printImpl('\n');
-            printImpl(result.data);
+            print('\n');
+            print(result.data);
 
             try {
-                writeToClipboardImpl(result.data);
-                printImpl('\n');
-                printImpl(
+                writeToClipboard(result.data);
+                print('\n');
+                print(
                     formatMessage(
                         `The data url for ${result.source} has been copied in your clipboard`,
                     ),
@@ -26,7 +26,7 @@ export const outputResultsAsDataUrlsFactory = (
             } catch (error) {
                 console.error(error);
                 if (platform() === 'linux') {
-                    printImpl(
+                    print(
                         formatMessage(
                             'Install xclip if you want the url to be copied in your clipboard automatically.',
                         ),
@@ -37,11 +37,11 @@ export const outputResultsAsDataUrlsFactory = (
             return;
         }
 
-        printImpl('\n');
-        printImpl(formatSource(result.source));
-        printImpl('\n');
-        printImpl(result.data);
+        print('\n');
+        print(formatSource(result.source));
+        print('\n');
+        print(result.data);
     });
 };
 
-export default outputResultsAsDataUrlsFactory();
+export default outputResultsAsDataUrlsFactory({});

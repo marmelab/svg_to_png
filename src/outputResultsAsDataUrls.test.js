@@ -6,10 +6,10 @@ import {
 describe('outputResultsAsDataUrls', () => {
     const writeToClipboard = jest.fn();
     const print = jest.fn();
-    const outputResultsAsDataUrls = outputResultsAsDataUrlsFactory(
+    const outputResultsAsDataUrls = outputResultsAsDataUrlsFactory({
         writeToClipboard,
         print,
-    );
+    });
 
     it('prints the results to console', () => {
         outputResultsAsDataUrls([

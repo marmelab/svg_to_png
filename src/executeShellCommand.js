@@ -1,16 +1,16 @@
-import { readFileSync } from 'fs';
+import { readFileSync as defaultReadFileSync } from 'fs';
 
-import startServer from './server';
-import getSvgFromStdIn from './getSvgFromStdIn';
-import question from './question';
-import convertToPng from './convertToPng';
+import defaultStartServer from './server';
+import defaultGetSvgFromStdIn from './getSvgFromStdIn';
+import defaultQuestion from './question';
+import defaultConvertToPng from './convertToPng';
 import toPngDataUrl from './toPngDataUrl';
 import outputResultsAsDataUrls from './outputResultsAsDataUrls';
 import outputResultsAsFiles from './outputResultsAsFiles';
 
 const print = console.log; // eslint-disable-line
 
-const handleResults = async (results, options) => {
+const defaultHandleResults = async (results, options) => {
     if (options.out) {
         return outputResultsAsFiles(results, options);
     }
@@ -18,36 +18,36 @@ const handleResults = async (results, options) => {
     return outputResultsAsDataUrls(results);
 };
 
-export const executeShellCommandFactory = (
-    startServerImpl = startServer,
-    readFileSyncImpl = readFileSync,
-    getSvgFromStdInImpl = getSvgFromStdIn,
-    convertToPngImpl = convertToPng,
-    handleResultsImpl = handleResults,
-    questionImpl = question,
-) => async (options, showHelp) => {
+export const executeShellCommandFactory = ({
+    startServer = defaultStartServer,
+    readFileSync = defaultReadFileSync,
+    getSvgFromStdIn = defaultGetSvgFromStdIn,
+    convertToPng = defaultConvertToPng,
+    handleResults = defaultHandleResults,
+    question = defaultQuestion,
+}) => async (options, showHelp) => {
     const sources = [];
 
     if (options.http) {
-        return await startServerImpl(options.port);
+        return await startServer(options.port);
     }
 
     if (options.files && options.files.length > 0) {
         sources.push(
             ...options.files.map(file => ({
                 source: file,
-                svg: readFileSyncImpl(file, 'utf8'),
+                svg: readFileSync(file, 'utf8'),
             })),
         );
     } else {
-        const svg = await getSvgFromStdInImpl().catch(async error => {
+        const svg = await getSvgFromStdIn().catch(async error => {
             print(error.message);
-            const answer = questionImpl(
+            const answer = question(
                 'Did you mean to run in server mode ? (y/n default n)',
             );
 
             if (answer) {
-                return await startServerImpl();
+                return await startServer();
             }
             return showHelp();
         });
@@ -58,7 +58,7 @@ export const executeShellCommandFactory = (
     }
 
     const promises = sources.map(({ source, svg }) =>
-        convertToPngImpl(svg, options).then(data => ({
+        convertToPng(svg, options).then(data => ({
             source,
             data: options.out ? data : toPngDataUrl(data),
         })),
@@ -66,7 +66,7 @@ export const executeShellCommandFactory = (
 
     const results = await Promise.all(promises);
 
-    await handleResultsImpl(results, options);
+    await handleResults(results, options);
 };
 
-export default executeShellCommandFactory();
+export default executeShellCommandFactory({});
