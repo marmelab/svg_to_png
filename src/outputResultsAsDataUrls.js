@@ -3,42 +3,45 @@ import chalk from 'chalk';
 import writeToClipboard from './writeToClipboard';
 
 const print = console.log; // eslint-disable-line
-const formatSource = chalk.bold.green;
+export const formatSource = chalk.bold.green;
 const formatMessage = chalk.bold.gray;
 
-export default results => {
-    Promise.all(
-        results.map(async result => {
-            if (results.length === 1) {
-                print('\n');
-                print(result.data);
+export const outputResultsAsDataUrlsFactory = (
+    writeToClipboardImpl,
+    printImpl,
+) => results => {
+    results.map(async result => {
+        if (results.length === 1) {
+            printImpl('\n');
+            printImpl(result.data);
 
-                try {
-                    await writeToClipboard(result.data);
-                    print('\n');
-                    print(
+            try {
+                writeToClipboardImpl(result.data);
+                printImpl('\n');
+                printImpl(
+                    formatMessage(
+                        `The data url for ${result.source} has been copied in your clipboard`,
+                    ),
+                );
+            } catch (error) {
+                console.error(error);
+                if (platform() === 'linux') {
+                    printImpl(
                         formatMessage(
-                            `The data url for ${result.source} has been copied in your clipboard`,
+                            'Install xclip if you want the url to be copied in your clipboard automatically.',
                         ),
                     );
-                } catch (error) {
-                    console.error(error);
-                    if (platform() === 'linux') {
-                        print(
-                            formatMessage(
-                                'Install xclip if you want the url to be copied in your clipboard automatically.',
-                            ),
-                        );
-                    }
                 }
-
-                return;
             }
 
-            print('\n');
-            print(formatSource(result.source));
-            print('\n');
-            print(result.data);
-        }),
-    );
+            return;
+        }
+
+        printImpl('\n');
+        printImpl(formatSource(result.source));
+        printImpl('\n');
+        printImpl(result.data);
+    });
 };
+
+export default outputResultsAsDataUrlsFactory(writeToClipboard, print);
