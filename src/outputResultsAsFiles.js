@@ -4,23 +4,39 @@ import { existsSync, mkdirSync, statSync, writeFileSync } from 'fs';
 import question from './question';
 
 const print = console.log; // eslint-disable-line
-const formatMessage = chalk.bold.gray;
 const formatError = chalk.bold.red;
 
-const writeFile = async (path, data) => {
+const canWriteFile = (path, askForOverrides, force) => {
+    if (!force && askForOverrides) {
+        const answer = question(
+            `A file named ${path} already exists. Shall we override it? (y/n default n)`,
+        );
+
+        return answer;
+    }
+
+    return force;
+};
+
+const writeFile = async (path, data, askForOverrides, force) => {
     if (extname(path) !== '.png') {
         path += '.png';
     }
 
     const exists = existsSync(path);
     if (exists) {
-        const answer = question(
-            `A file named ${path} already exists. Shall we override it? (y/n default n)`,
-        );
-
-        if (!answer) {
-            print(formatMessage('Exiting without overriding existing file'));
+        if (!canWriteFile(path, askForOverrides, force)) {
+            if (askForOverrides) {
+                print('Exiting without overriding existing file');
+            } else {
+                print(
+                    formatError(
+                        `A file named ${path} already exists. Use the --force option if you want to override it`,
+                    ),
+                );
+            }
             process.exit(0);
+            return;
         }
     }
 
@@ -40,7 +56,7 @@ const createOutputDirectoryIfNeeded = path => {
     mkdirSync(path);
 };
 
-export default async (results, { out }) => {
+export default async (results, { out, force }) => {
     if (results.length > 1) {
         if (statSync(out).isFile) {
             print(
@@ -57,6 +73,7 @@ export default async (results, { out }) => {
                 writeFile(
                     resolve(out, `${basename(result.source, '.svg')}.png`),
                     result.data,
+                    true,
                 ),
             ),
         );
@@ -86,7 +103,12 @@ export default async (results, { out }) => {
         );
     }
 
-    writeFile(outFileName, results[0].data);
+    writeFile(
+        outFileName,
+        results[0].data,
+        results[0].source !== 'stdin',
+        force,
+    );
 
     return;
 };

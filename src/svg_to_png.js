@@ -28,21 +28,25 @@ commander
     )
     .option(
         '--out [value]',
-        'Where to output the file: either a file paht for single source or a directory path for multiple sources',
+        'Where to output the file: either a file path for single source or a directory path for multiple sources.',
     )
     .option(
-        '--width <n>',
-        'The width of the generated PNG (if height is not specified, tries to preserve proportions)',
+        '-f, --force',
+        'Whether to override existing files. Default is false.',
+    )
+    .option(
+        '-w, --width <n>',
+        'The width of the generated PNG (if height is not specified, tries to preserve proportions). By default, it will use the svg width.',
         parseInt,
     )
     .option(
-        '--height <n>',
-        'The height of the generated PNG (if width is not specified, tries to preserve proportions)',
+        '-h, --height <n>',
+        'The height of the generated PNG (if width is not specified, tries to preserve proportions). By default, it will use the svg height.',
         parseInt,
     )
     .option('--http', 'Starts the HTTP server')
     .option(
-        '--port <n>',
+        '-p, --port <n>',
         'The port of the http server. Default is 3000',
         parseInt,
         3000,
@@ -101,6 +105,7 @@ const options = commander.parse(process.argv);
 executeShellCommand({
     out: options.out,
     files: options.args,
+    force: options.force,
     height: isNaN(options.height) ? undefined : options.height,
     http: options.http,
     port: isNaN(options.port) ? undefined : options.port,
