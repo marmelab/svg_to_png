@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { basename, extname, resolve } from 'path';
 import { existsSync, mkdirSync, statSync, writeFileSync } from 'fs';
-import readline from './readline';
+import question from './question';
 
 const print = console.log; // eslint-disable-line
 const formatMessage = chalk.bold.gray;
@@ -14,14 +14,11 @@ const writeFile = async (path, data) => {
 
     const exists = existsSync(path);
     if (exists) {
-        const rl = readline();
-        const answer = await rl.question(
+        const answer = await question(
             `A file named ${path} already exists. Shall we override it? (y/n default n)`,
         );
 
-        rl.close();
-
-        if (answer.toLowerCase() !== 'y') {
+        if (answer) {
             print(formatMessage('Exiting without overriding existing file'));
             process.exit(0);
         }
