@@ -18,7 +18,7 @@ const writeFile = async (path, data) => {
             `A file named ${path} already exists. Shall we override it? (y/n default n)`,
         );
 
-        if (answer) {
+        if (!answer) {
             print(formatMessage('Exiting without overriding existing file'));
             process.exit(0);
         }
