@@ -1,7 +1,7 @@
 import commander from 'commander';
 import { readFileSync } from 'fs';
 
-import readline from './readline';
+import question from './question';
 import startServer from './server';
 import getSvgFromStdIn from './getSvgFromStdIn';
 import convertToPng from './convertToPng';
@@ -73,11 +73,10 @@ const executeShellCommand = async options => {
     } else {
         const svg = await getSvgFromStdIn().catch(async error => {
             print(error.message);
-            const rl = readline();
-            const answer = await rl.question(
+            const answer = question(
                 'Did you mean to run in server mode ? (y/n default n)',
             );
-            if (answer.toLowerCase() === 'y') {
+            if (answer) {
                 await startServer();
                 process.exit(0);
             }
