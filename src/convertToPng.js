@@ -44,7 +44,11 @@ const getPngFromChrome = async ({ client, url, width, height }) => {
     return screenshot.data;
 };
 
-export default async (svg, options) => {
+export const convertToPngFactory = (
+    chromeRemoteInterfaceImpl,
+    launchImpl,
+    convertHtmlToDataUrlImpl,
+) => async (svg, options) => {
     debug('Processed source file', svg);
 
     const { width, height } = getDimensions(svg, options);
@@ -64,10 +68,10 @@ export default async (svg, options) => {
         </html>`;
     debug('HTML data', html);
 
-    const url = convertHtmlToDataUrl(html);
+    const url = convertHtmlToDataUrlImpl(html);
     debug('HTML dataurl', url);
 
-    const chrome = await launch({
+    const chrome = await launchImpl({
         port: 9222,
         chromeFlags: [
             '--headless',
@@ -82,19 +86,26 @@ export default async (svg, options) => {
     let client;
 
     try {
-        client = await chromeRemoteInterface();
+        client = await chromeRemoteInterfaceImpl();
 
-        const pngDataUrl = await getPngFromChrome({
+        const pngData = await getPngFromChrome({
             client,
             url,
             width,
             height,
         });
-        return pngDataUrl;
+        return pngData;
     } catch (error) {
         console.error(error);
+        throw error;
     } finally {
         client.close();
         chrome.kill();
     }
 };
+
+export default convertToPngFactory(
+    chromeRemoteInterface,
+    launch,
+    convertHtmlToDataUrl,
+);

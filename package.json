@@ -37,6 +37,7 @@
   },
   "scripts": {
     "build": "babel ./src --out-dir ./dist",
+    "test": "jest",
     "pkg": "npm run build && pkg ./dist/svg_to_png.js --targets latest-linux-x64,latest-macos-x64,latest-win-x64 --output ./build/svg_to_png",
     "lint": "eslint --fix ./src",
     "precommit": "lint-staged"
