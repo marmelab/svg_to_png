@@ -14,7 +14,7 @@ const writeFile = async (path, data) => {
 
     const exists = existsSync(path);
     if (exists) {
-        const answer = await question(
+        const answer = question(
             `A file named ${path} already exists. Shall we override it? (y/n default n)`,
         );
 
