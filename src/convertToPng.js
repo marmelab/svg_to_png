@@ -45,9 +45,9 @@ const getPngFromChrome = async ({ client, url, width, height }) => {
 };
 
 export const convertToPngFactory = (
-    chromeRemoteInterfaceImpl,
-    launchImpl,
-    convertHtmlToDataUrlImpl,
+    chromeRemoteInterfaceImpl = chromeRemoteInterface,
+    launchImpl = launch,
+    convertHtmlToDataUrlImpl = convertHtmlToDataUrl,
 ) => async (svg, options) => {
     debug('Processed source file', svg);
 
@@ -104,8 +104,4 @@ export const convertToPngFactory = (
     }
 };
 
-export default convertToPngFactory(
-    chromeRemoteInterface,
-    launch,
-    convertHtmlToDataUrl,
-);
+export default convertToPngFactory();

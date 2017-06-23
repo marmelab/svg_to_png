@@ -9,7 +9,10 @@ import toPngDataUrl from './toPngDataUrl';
 const print = console.log; // eslint-disable-line
 const formatMessage = chalk.bold.gray;
 
-export const handlePostFactory = convertToPngImpl => async (req, res) => {
+export const handlePostFactory = (convertToPngImpl = convertToPng) => async (
+    req,
+    res,
+) => {
     const svg = req.body;
     const asDataUrl = req.query['data-url'];
     const { height, width } = req.query;
@@ -39,7 +42,7 @@ export default async (port = 3000) => {
     const app = express();
     app.use(bodyParser.text({ type: '*/*' }));
 
-    app.post('/', handlePostFactory(convertToPng));
+    app.post('/', handlePostFactory());
 
     app.listen(finalPort, () => {
         print(

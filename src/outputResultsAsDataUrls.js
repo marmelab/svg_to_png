@@ -7,8 +7,8 @@ export const formatSource = chalk.bold.green;
 const formatMessage = chalk.bold.gray;
 
 export const outputResultsAsDataUrlsFactory = (
-    writeToClipboardImpl,
-    printImpl,
+    writeToClipboardImpl = writeToClipboard,
+    printImpl = print,
 ) => results => {
     results.map(async result => {
         if (results.length === 1) {
@@ -44,4 +44,4 @@ export const outputResultsAsDataUrlsFactory = (
     });
 };
 
-export default outputResultsAsDataUrlsFactory(writeToClipboard, print);
+export default outputResultsAsDataUrlsFactory();
