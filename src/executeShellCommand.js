@@ -19,12 +19,12 @@ const handleResults = async (results, options) => {
 };
 
 export const executeShellCommandFactory = (
-    startServerImpl,
-    readFileSyncImpl,
-    getSvgFromStdInImpl,
-    convertToPngImpl,
-    handleResultsImpl,
-    questionImpl,
+    startServerImpl = startServer,
+    readFileSyncImpl = readFileSync,
+    getSvgFromStdInImpl = getSvgFromStdIn,
+    convertToPngImpl = convertToPng,
+    handleResultsImpl = handleResults,
+    questionImpl = question,
 ) => async (options, showHelp) => {
     const sources = [];
 
@@ -69,11 +69,4 @@ export const executeShellCommandFactory = (
     await handleResultsImpl(results, options);
 };
 
-export default executeShellCommandFactory(
-    startServer,
-    readFileSync,
-    getSvgFromStdIn,
-    convertToPng,
-    handleResults,
-    question,
-);
+export default executeShellCommandFactory();
