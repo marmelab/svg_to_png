@@ -99,7 +99,9 @@ export const convertToPngFactory = ({
         console.error(error);
         throw error;
     } finally {
-        client.close();
+        if (client) {
+            client.close();
+        }
         chrome.kill();
     }
 };
