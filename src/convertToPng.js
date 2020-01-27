@@ -90,11 +90,12 @@ export default async (svg, options) => {
             width,
             height,
         });
+
         return pngDataUrl;
     } catch (error) {
         console.error(error);
     } finally {
-        client.close();
-        chrome.kill();
+        await client.close();
+        await chrome.kill();
     }
 };

@@ -50,14 +50,15 @@ commander
         'The port of the http server. Default is 3000',
         parseInt,
         3000,
-    );
+    )
+    .option('--nocopy', 'Disable copy to clipboard');
 
 const handleResults = async (results, options) => {
     if (options.out) {
         return outputResultsAsFiles(results, options);
     }
 
-    return outputResultsAsDataUrls(results);
+    return outputResultsAsDataUrls(results, options);
 };
 
 const executeShellCommand = async options => {
@@ -110,6 +111,7 @@ executeShellCommand({
     http: options.http,
     port: isNaN(options.port) ? undefined : options.port,
     width: isNaN(options.width) ? undefined : options.width,
+    noCopy: !!options.nocopy,
 })
     .then(() => process.exit())
     .catch(error => console.error(error));

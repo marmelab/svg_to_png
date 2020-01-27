@@ -10,7 +10,6 @@
     "chrome-remote-interface": "~0.23.2",
     "clipboardy": "~1.1.4",
     "commander": "~2.9.0",
-    "datauri": "~1.0.5",
     "debug": "~2.6.8",
     "express": "~4.15.3",
     "react-dev-utils": "~3.0.0",
@@ -46,5 +45,6 @@
       "eslint --fix",
       "git add"
     ]
-  }
+  },
+  "false": {}
 }
