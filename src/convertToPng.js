@@ -1,7 +1,7 @@
-import chromeRemoteInterface from 'chrome-remote-interface';
-import { launch } from 'chrome-launcher';
+import defaultChromeRemoteInterface from 'chrome-remote-interface';
+import { launch as defaultLaunch } from 'chrome-launcher';
 import debugFactory from 'debug';
-import convertHtmlToDataUrl from './convertHtmlToDataUrl';
+import defaultConvertHtmlToDataUrl from './convertHtmlToDataUrl';
 import getDimensions from './getDimensions';
 
 const debug = debugFactory('svg_to_png');
@@ -44,7 +44,11 @@ const getPngFromChrome = async ({ client, url, width, height }) => {
     return screenshot.data;
 };
 
-export default async (svg, options) => {
+export const convertToPngFactory = ({
+    chromeRemoteInterface = defaultChromeRemoteInterface,
+    launch = defaultLaunch,
+    convertHtmlToDataUrl = defaultConvertHtmlToDataUrl,
+}) => async (svg, options) => {
     debug('Processed source file', svg);
 
     const { width, height } = getDimensions(svg, options);
@@ -84,17 +88,22 @@ export default async (svg, options) => {
     try {
         client = await chromeRemoteInterface();
 
-        const pngDataUrl = await getPngFromChrome({
+        const pngData = await getPngFromChrome({
             client,
             url,
             width,
             height,
         });
-        return pngDataUrl;
+        return pngData;
     } catch (error) {
         console.error(error);
+        throw error;
     } finally {
-        client.close();
+        if (client) {
+            client.close();
+        }
         chrome.kill();
     }
 };
+
+export default convertToPngFactory({});

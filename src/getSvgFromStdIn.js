@@ -1,21 +1,24 @@
-export default () =>
+export default (stdin = process.stdin, timeout = 2000) =>
     new Promise((resolve, reject) => {
         let data = '';
 
-        process.stdin.on('readable', () => {
-            const chunk = process.stdin.read();
+        stdin.on('readable', () => {
+            const chunk = stdin.read();
             if (chunk !== null) {
                 data += chunk;
             }
         });
 
-        process.stdin.on('end', () => {
+        stdin.on('end', () => {
             resolve(data);
         });
 
-        process.stdin.on('error', error => {
+        stdin.on('error', error => {
             reject(error);
         });
 
-        setTimeout(() => reject(new Error('No entry detected aborting')), 2000);
+        setTimeout(
+            () => reject(new Error('No entry detected aborting')),
+            timeout,
+        );
     });
